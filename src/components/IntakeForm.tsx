@@ -1,16 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, Container, Paper, Typography, IconButton, Button, List, ListItem, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Paper, Typography, Button, List, ListItem, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import SendIcon from '@mui/icons-material/Send';
-import { analyzeSpeech, DisasterIntake, getMissingRequiredFields, REQUIRED_FIELDS } from '../services/gemini';
-
-interface AudioData {
-  timestamp: number;
-  volume: number;
-}
+import { analyzeSpeech, DisasterIntake, getMissingRequiredFields } from '../services/gemini';
 
 const FIELD_LABELS: Record<string, string> = {
   first_name: 'First Name',
@@ -42,12 +37,10 @@ const FIELD_LABELS: Record<string, string> = {
 
 export default function IntakeForm() {
   const [isRecording, setIsRecording] = useState(false);
-  const [audioData, setAudioData] = useState<AudioData[]>([]);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [error, setError] = useState<string>('');
   const [transcription, setTranscription] = useState<string>('');
   const [analysis, setAnalysis] = useState<Partial<DisasterIntake>>({});
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
   const [intakeId] = useState(`ID: ${Math.floor(10000 + Math.random() * 90000)}`);
   const [missingFields, setMissingFields] = useState<string[]>([]);
@@ -78,22 +71,6 @@ export default function IntakeForm() {
       analyzer.fftSize = 256;
       source.connect(analyzer);
 
-      const dataArray = new Uint8Array(analyzer.frequencyBinCount);
-      
-      const processAudioData = () => {
-        if (isRecording) {
-          analyzer.getByteFrequencyData(dataArray);
-          const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-          
-          setAudioData(prev => [...prev, {
-            timestamp: Date.now(),
-            volume: average
-          }].slice(-50));
-          
-          requestAnimationFrame(processAudioData);
-        }
-      };
-
       const recognition = setupSpeechRecognition();
       if (recognition) {
         recognition.start();
@@ -103,11 +80,10 @@ export default function IntakeForm() {
       recorder.start();
       setMediaRecorder(recorder);
       setIsRecording(true);
-      processAudioData();
     } catch (err) {
       setError('Error accessing microphone: ' + err);
     }
-  }, [isRecording, setupSpeechRecognition]);
+  }, [setupSpeechRecognition]);
 
   const stopRecording = useCallback(async () => {
     if (mediaRecorder) {
@@ -120,7 +96,6 @@ export default function IntakeForm() {
       }
 
       if (transcription) {
-        setIsAnalyzing(true);
         try {
           const result = await analyzeSpeech(transcription);
           setAnalysis(prev => ({ ...prev, ...result }));
@@ -128,15 +103,12 @@ export default function IntakeForm() {
           setMissingFields(missing);
         } catch (err) {
           setError('Error analyzing speech: ' + err);
-        } finally {
-          setIsAnalyzing(false);
         }
       }
     }
   }, [mediaRecorder, speechRecognition, transcription, analysis]);
 
   const handleSubmit = () => {
-    // Here you would typically send the data to your backend
     console.log('Submitting intake form:', analysis);
     setShowSubmitDialog(true);
   };
@@ -152,7 +124,7 @@ export default function IntakeForm() {
     };
   }, [mediaRecorder, speechRecognition]);
 
-  const renderFieldValue = (key: string, value: any) => {
+  const renderFieldValue = (value: any) => {
     if (typeof value === 'boolean') {
       return value ? 'Yes' : 'No';
     }
@@ -240,7 +212,7 @@ export default function IntakeForm() {
                         </ListItemIcon>
                         <ListItemText
                           primary={FIELD_LABELS[fullKey]}
-                          secondary={renderFieldValue(fullKey, subValue)}
+                          secondary={renderFieldValue(subValue)}
                         />
                       </ListItem>
                     );
@@ -254,7 +226,7 @@ export default function IntakeForm() {
                     </ListItemIcon>
                     <ListItemText
                       primary={FIELD_LABELS[key]}
-                      secondary={renderFieldValue(key, value)}
+                      secondary={renderFieldValue(value)}
                     />
                   </ListItem>
                 );

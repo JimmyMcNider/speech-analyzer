@@ -42,7 +42,7 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
               alt="Red Cross Logo" 
               style={{ height: '40px', marginRight: '12px' }}
             />
-            <Typography
+            {/* <Typography
               variant="h6"
               sx={{
                 fontWeight: 600,
@@ -51,7 +51,7 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
               }}
             >
               RapidVoice
-            </Typography>
+            </Typography> */}
           </Box>
 
           {isMobile ? (

@@ -6,7 +6,7 @@
     <text font-family="Arial-BoldMT, Arial" font-size="20" font-weight="bold" fill="#000000" x="60" y="30">
       <tspan x="60" y="30">RapidVoice</tspan>
     </text>
-    <text font-family="Arial, Arial" font-size="14" fill="#666666" x="60" y="45">
+    <text font-family="Arial, Arial" font-size="12" fill="#666666" x="60" y="45">
       <tspan x="60" y="45">by American Red Cross</tspan>
     </text>
   </g>
